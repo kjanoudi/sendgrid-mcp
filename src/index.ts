@@ -8,19 +8,22 @@ import {
   ErrorCode,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import sgMail from '@sendgrid/mail';
+import { SendGridService } from "./services/sendgrid.js";
+import { getToolDefinitions, handleToolCall } from "./tools/index.js";
 
 // Initialize SendGrid with API key from environment variable
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 if (!SENDGRID_API_KEY) {
   throw new Error('SENDGRID_API_KEY environment variable is required');
 }
-sgMail.setApiKey(SENDGRID_API_KEY);
+
+// Initialize the SendGrid service
+const sendGridService = new SendGridService(SENDGRID_API_KEY);
 
 const server = new Server(
   {
     name: "sendgrid-mcp-server",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -31,88 +34,41 @@ const server = new Server(
 
 /**
  * Handler that lists available tools.
- * Exposes a "send_email" tool that lets clients send emails via SendGrid.
+ * Exposes all SendGrid API capabilities as tools.
  */
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
-    tools: [
-      {
-        name: "send_email",
-        description: "Send an email using SendGrid",
-        inputSchema: {
-          type: "object",
-          properties: {
-            to: {
-              type: "string",
-              description: "Recipient email address"
-            },
-            subject: {
-              type: "string",
-              description: "Email subject line"
-            },
-            text: {
-              type: "string",
-              description: "Plain text content of the email"
-            },
-            html: {
-              type: "string",
-              description: "HTML content of the email (optional)",
-            },
-            from: {
-              type: "string",
-              description: "Sender email address (must be verified with SendGrid)",
-            }
-          },
-          required: ["to", "subject", "text", "from"]
-        }
-      }
-    ]
+    tools: getToolDefinitions(sendGridService)
   };
 });
 
 /**
- * Handler for the send_email tool.
- * Sends an email using SendGrid with the provided parameters.
+ * Handler for tool calls.
+ * Routes each tool call to the appropriate SendGrid service method.
  */
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name !== "send_email") {
-    throw new McpError(ErrorCode.MethodNotFound, "Unknown tool");
-  }
-
-  const { to, subject, text, html, from } = request.params.arguments as {
-    to: string;
-    subject: string;
-    text: string;
-    html?: string;
-    from: string;
-  };
-
   try {
-    const msg = {
-      to,
-      from,
-      subject,
-      text,
-      html: html || text, // Use text as HTML if no HTML provided
-    };
-
-    await sgMail.send(msg);
-
-    return {
-      content: [{
-        type: "text",
-        text: `Email sent successfully to ${to}`
-      }]
-    };
+    return await handleToolCall(sendGridService, request.params.name, request.params.arguments);
   } catch (error: any) {
     console.error('SendGrid Error:', error);
-    if (error.response && error.response.body && Array.isArray(error.response.body.errors)) {
+    
+    // Handle SendGrid API errors
+    if (error.response?.body?.errors) {
       throw new McpError(
         ErrorCode.InternalError,
         `SendGrid API Error: ${error.response.body.errors.map((e: { message: string }) => e.message).join(', ')}`
       );
     }
-    throw new McpError(ErrorCode.InternalError, 'Failed to send email');
+    
+    // Handle other errors
+    if (error instanceof Error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        error.message
+      );
+    }
+    
+    throw new McpError(ErrorCode.InternalError, 'An unexpected error occurred');
   }
 });
 
