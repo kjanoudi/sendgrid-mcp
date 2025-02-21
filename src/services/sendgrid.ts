@@ -38,11 +38,10 @@ export class SendGridService {
 
   async getContactsByList(listId: string): Promise<SendGridContact[]> {
     const [response] = await this.client.request({
-      method: 'GET',
-      url: '/v3/marketing/contacts',
-      qs: {
-        list_ids: listId,
-        page_size: 100
+      method: 'POST',
+      url: '/v3/marketing/contacts/search',
+      body: {
+        query: `CONTAINS(list_ids, '${listId}')`
       }
     });
     return (response.body as { result: SendGridContact[] }).result || [];
@@ -54,6 +53,14 @@ export class SendGridService {
       url: `/v3/marketing/lists/${listId}`
     });
     return response.body as SendGridList;
+  }
+
+  async listContactLists(): Promise<SendGridList[]> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: '/v3/marketing/lists'
+    });
+    return (response.body as { result: SendGridList[] }).result;
   }
 
   async deleteList(listId: string): Promise<void> {

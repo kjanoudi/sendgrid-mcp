@@ -259,6 +259,43 @@ export const getToolDefinitions = (service: SendGridService) => [
       properties: {},
       required: []
     }
+  },
+  {
+    name: 'delete_list',
+    description: 'Delete a contact list from SendGrid',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        list_id: {
+          type: 'string',
+          description: 'ID of the contact list to delete'
+        }
+      },
+      required: ['list_id']
+    }
+  },
+  {
+    name: 'list_contact_lists',
+    description: 'List all contact lists in your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'get_contacts_by_list',
+    description: 'Get all contacts in a SendGrid list',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        list_id: {
+          type: 'string',
+          description: 'ID of the contact list'
+        }
+      },
+      required: ['list_id']
+    }
   }
 ];
 
@@ -319,6 +356,36 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
             generation: t.generation,
             updated_at: t.updated_at,
             versions: t.versions.length
+          })), null, 2)
+        }]
+      };
+
+    case 'delete_list':
+      await service.deleteList(args.list_id);
+      return { content: [{ type: 'text', text: `Contact list ${args.list_id} deleted successfully` }] };
+
+    case 'list_contact_lists':
+      const lists = await service.listContactLists();
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(lists.map(l => ({
+            id: l.id,
+            name: l.name,
+            contact_count: l.contact_count
+          })), null, 2)
+        }]
+      };
+
+    case 'get_contacts_by_list':
+      const contacts = await service.getContactsByList(args.list_id);
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(contacts.map(c => ({
+            email: c.email,
+            first_name: c.first_name,
+            last_name: c.last_name
           })), null, 2)
         }]
       };
