@@ -26,13 +26,28 @@ export class SendGridService {
 
   // Contact Management
   async deleteContactsByEmails(emails: string[]): Promise<void> {
-    await this.client.request({
-      method: 'DELETE',
-      url: '/v3/marketing/contacts',
+    // First get the contact IDs for the emails
+    const [searchResponse] = await this.client.request({
+      method: 'POST',
+      url: '/v3/marketing/contacts/search',
       body: {
-        emails: emails
+        query: `email IN (${emails.map(email => `'${email}'`).join(',')})`
       }
     });
+    
+    const contacts = (searchResponse.body as { result: SendGridContact[] }).result || [];
+    const contactIds = contacts.map(contact => contact.id).filter(id => id) as string[];
+
+    if (contactIds.length > 0) {
+      // Then delete the contacts by their IDs
+      await this.client.request({
+        method: 'DELETE',
+        url: '/v3/marketing/contacts',
+        qs: {
+          ids: contactIds.join(',')
+        }
+      });
+    }
   }
 
   async listAllContacts(): Promise<SendGridContact[]> {
