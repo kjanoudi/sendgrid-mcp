@@ -1,6 +1,6 @@
 import { Client } from '@sendgrid/client';
 import sgMail from '@sendgrid/mail';
-import { SendGridContact, SendGridList, SendGridTemplate, SendGridCampaign, SendGridStats, SendGridSingleSend } from '../types/index.js';
+import { SendGridContact, SendGridList, SendGridTemplate, SendGridStats, SendGridSingleSend } from '../types/index.js';
 
 export class SendGridService {
   private client: Client;
@@ -127,6 +127,31 @@ export class SendGridService {
     return response;
   }
 
+  async removeContactsFromList(listId: string, contactEmails: string[]) {
+    // First get the contact IDs for the emails
+    const [searchResponse] = await this.client.request({
+      method: 'POST',
+      url: '/v3/marketing/contacts/search',
+      body: {
+        query: `email IN (${contactEmails.map(email => `'${email}'`).join(',')}) AND CONTAINS(list_ids, '${listId}')`
+      }
+    });
+    
+    const contacts = (searchResponse.body as { result: SendGridContact[] }).result || [];
+    const contactIds = contacts.map(contact => contact.id).filter(id => id) as string[];
+
+    if (contactIds.length > 0) {
+      // Remove the contacts from the list
+      await this.client.request({
+        method: 'DELETE',
+        url: `/v3/marketing/lists/${listId}/contacts`,
+        qs: {
+          contact_ids: contactIds.join(',')
+        }
+      });
+    }
+  }
+
   // Template Management
   async createTemplate(params: {
     name: string;
@@ -192,35 +217,6 @@ export class SendGridService {
     return response.body as SendGridTemplate;
   }
 
-  // Campaign Management
-  async createCampaign(params: {
-    title: string;
-    subject: string;
-    sender_id: number;
-    list_ids: string[];
-    html_content?: string;
-    plain_content?: string;
-    template_id?: string;
-  }): Promise<SendGridCampaign> {
-    const [response] = await this.client.request({
-      method: 'POST',
-      url: '/v3/marketing/campaigns',
-      body: params
-    });
-    return response.body as SendGridCampaign;
-  }
-
-  async scheduleCampaign(campaignId: string, sendAt: Date) {
-    const [response] = await this.client.request({
-      method: 'PUT',
-      url: `/v3/marketing/campaigns/${campaignId}/schedule`,
-      body: {
-        send_at: sendAt.toISOString()
-      }
-    });
-    return response;
-  }
-
   // Email Validation
   async validateEmail(email: string) {
     const [response] = await this.client.request({
@@ -241,14 +237,6 @@ export class SendGridService {
       method: 'GET',
       url: '/v3/stats',
       qs: params
-    });
-    return response.body as SendGridStats;
-  }
-
-  async getCampaignStats(campaignId: string): Promise<SendGridStats> {
-    const [response] = await this.client.request({
-      method: 'GET',
-      url: `/v3/marketing/campaigns/${campaignId}/stats`
     });
     return response.body as SendGridStats;
   }

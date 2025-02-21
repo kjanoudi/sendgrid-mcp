@@ -1,5 +1,5 @@
 import { SendGridService } from '../services/sendgrid.js';
-import { SendGridContact, SendGridTemplate, SendGridCampaign, SendGridSingleSend } from '../types/index.js';
+import { SendGridContact, SendGridTemplate, SendGridSingleSend } from '../types/index.js';
 
 export const getToolDefinitions = (service: SendGridService) => [
   {
@@ -168,65 +168,6 @@ export const getToolDefinitions = (service: SendGridService) => [
     }
   },
   {
-    name: 'create_campaign',
-    description: 'Create a new email campaign in SendGrid',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        title: {
-          type: 'string',
-          description: 'Title of the campaign'
-        },
-        subject: {
-          type: 'string',
-          description: 'Subject line for campaign emails'
-        },
-        sender_id: {
-          type: 'number',
-          description: 'ID of the sender identity'
-        },
-        list_ids: {
-          type: 'array',
-          items: {
-            type: 'string'
-          },
-          description: 'Array of list IDs to send the campaign to'
-        },
-        template_id: {
-          type: 'string',
-          description: 'ID of the template to use (optional)'
-        },
-        html_content: {
-          type: 'string',
-          description: 'HTML content if not using a template (optional)'
-        },
-        plain_content: {
-          type: 'string',
-          description: 'Plain text content if not using a template (optional)'
-        }
-      },
-      required: ['title', 'subject', 'sender_id', 'list_ids']
-    }
-  },
-  {
-    name: 'schedule_campaign',
-    description: 'Schedule a campaign for future sending',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        campaign_id: {
-          type: 'string',
-          description: 'ID of the campaign to schedule'
-        },
-        send_at: {
-          type: 'string',
-          description: 'ISO 8601 timestamp for when to send the campaign'
-        }
-      },
-      required: ['campaign_id', 'send_at']
-    }
-  },
-  {
     name: 'validate_email',
     description: 'Validate an email address using SendGrid',
     inputSchema: {
@@ -261,20 +202,6 @@ export const getToolDefinitions = (service: SendGridService) => [
         }
       },
       required: ['start_date']
-    }
-  },
-  {
-    name: 'get_campaign_stats',
-    description: 'Get statistics for a specific campaign',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        campaign_id: {
-          type: 'string',
-          description: 'ID of the campaign'
-        }
-      },
-      required: ['campaign_id']
     }
   },
   {
@@ -408,6 +335,27 @@ export const getToolDefinitions = (service: SendGridService) => [
       properties: {},
       required: []
     }
+  },
+  {
+    name: 'remove_contacts_from_list',
+    description: 'Remove contacts from a SendGrid list without deleting them',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        list_id: {
+          type: 'string',
+          description: 'ID of the contact list'
+        },
+        emails: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          description: 'Array of email addresses to remove from the list'
+        }
+      },
+      required: ['list_id', 'emails']
+    }
   }
 ];
 
@@ -454,14 +402,6 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
       const retrievedTemplate = await service.getTemplate(args.template_id);
       return { content: [{ type: 'text', text: JSON.stringify(retrievedTemplate, null, 2) }] };
 
-    case 'create_campaign':
-      const campaign = await service.createCampaign(args);
-      return { content: [{ type: 'text', text: `Campaign "${args.title}" created with ID: ${campaign.id}` }] };
-
-    case 'schedule_campaign':
-      await service.scheduleCampaign(args.campaign_id, new Date(args.send_at));
-      return { content: [{ type: 'text', text: `Campaign ${args.campaign_id} scheduled for ${args.send_at}` }] };
-
     case 'validate_email':
       const validation = await service.validateEmail(args.email);
       return { content: [{ type: 'text', text: JSON.stringify(validation, null, 2) }] };
@@ -469,10 +409,6 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
     case 'get_stats':
       const stats = await service.getStats(args);
       return { content: [{ type: 'text', text: JSON.stringify(stats, null, 2) }] };
-
-    case 'get_campaign_stats':
-      const campaignStats = await service.getCampaignStats(args.campaign_id);
-      return { content: [{ type: 'text', text: JSON.stringify(campaignStats, null, 2) }] };
 
     case 'list_templates':
       const templates = await service.listTemplates();
@@ -595,6 +531,10 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
           })), null, 2)
         }]
       };
+
+    case 'remove_contacts_from_list':
+      await service.removeContactsFromList(args.list_id, args.emails);
+      return { content: [{ type: 'text', text: `Removed ${args.emails.length} contacts from list ${args.list_id}` }] };
 
     default:
       throw new Error(`Unknown tool: ${name}`);

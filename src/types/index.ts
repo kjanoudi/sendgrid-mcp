@@ -32,14 +32,6 @@ export interface SendGridTemplateVersion {
   subject: string;
 }
 
-export interface SendGridCampaign {
-  id: string;
-  title: string;
-  status: string;
-  categories: string[];
-  send_at?: string;
-}
-
 export interface SendGridStats extends Array<{
   date: string;
   stats: Array<{
