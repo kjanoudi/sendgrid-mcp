@@ -16,7 +16,24 @@ describe('SendGridService Integration Tests', () => {
 
     afterAll(async () => {
       if (createdListId) {
-        await service.deleteList(createdListId);
+        try {
+          await service.deleteList(createdListId);
+          
+          // Wait a moment for deletion to process
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Verify list is deleted by trying to fetch it
+          try {
+            await service.getList(createdListId);
+            throw new Error('List was not deleted');
+          } catch (error: any) {
+            // Expect 404 error since list should be deleted
+            expect(error.code).toBe(404);
+          }
+        } catch (error) {
+          console.error('Error cleaning up test list:', error);
+          throw error;
+        }
       }
     });
 
