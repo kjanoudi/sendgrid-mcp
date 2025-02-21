@@ -25,6 +25,27 @@ export class SendGridService {
   }
 
   // Contact Management
+  async deleteContactsByEmails(emails: string[]): Promise<void> {
+    await this.client.request({
+      method: 'DELETE',
+      url: '/v3/marketing/contacts',
+      body: {
+        emails: emails
+      }
+    });
+  }
+
+  async listAllContacts(): Promise<SendGridContact[]> {
+    const [response] = await this.client.request({
+      method: 'POST',
+      url: '/v3/marketing/contacts/search',
+      body: {
+        query: "email IS NOT NULL" // Get all contacts that have an email
+      }
+    });
+    return (response.body as { result: SendGridContact[] }).result || [];
+  }
+
   async addContact(contact: SendGridContact) {
     const [response] = await this.client.request({
       method: 'PUT',
@@ -73,6 +94,17 @@ export class SendGridService {
   async createList(name: string): Promise<SendGridList> {
     const [response] = await this.client.request({
       method: 'POST',
+      url: '/v3/marketing/lists',
+      body: { name }
+    });
+    return response.body as SendGridList;
+  }
+
+  async addContactsToList(listId: string, contactEmails: string[]) {
+    const [response] = await this.client.request({
+      method: 'PUT',
+      url: '/v3/marketing/contacts',
+      body: {
       url: '/v3/marketing/lists',
       body: { name }
     });

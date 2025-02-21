@@ -1,6 +1,7 @@
 // Common interfaces for SendGrid API responses and requests
 
 export interface SendGridContact {
+  id?: string;
   email: string;
   first_name?: string;
   last_name?: string;

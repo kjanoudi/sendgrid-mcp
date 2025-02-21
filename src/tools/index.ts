@@ -3,6 +3,32 @@ import { SendGridContact, SendGridTemplate, SendGridCampaign } from '../types/in
 
 export const getToolDefinitions = (service: SendGridService) => [
   {
+    name: 'delete_contacts',
+    description: 'Delete contacts from your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        emails: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          description: 'Array of email addresses to delete'
+        }
+      },
+      required: ['emails']
+    }
+  },
+  {
+    name: 'list_contacts',
+    description: 'List all contacts in your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
     name: 'send_email',
     description: 'Send an email using SendGrid',
     inputSchema: {
@@ -301,6 +327,23 @@ export const getToolDefinitions = (service: SendGridService) => [
 
 export const handleToolCall = async (service: SendGridService, name: string, args: any) => {
   switch (name) {
+    case 'delete_contacts':
+      await service.deleteContactsByEmails(args.emails);
+      return { content: [{ type: 'text', text: `Successfully deleted ${args.emails.length} contacts` }] };
+
+    case 'list_contacts':
+      const allContacts = await service.listAllContacts();
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(allContacts.map(c => ({
+            email: c.email,
+            first_name: c.first_name,
+            last_name: c.last_name
+          })), null, 2)
+        }]
+      };
+
     case 'send_email':
       await service.sendEmail(args);
       return { content: [{ type: 'text', text: `Email sent successfully to ${args.to}` }] };
