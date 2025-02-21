@@ -9,7 +9,66 @@ describe('SendGridService Integration Tests', () => {
   });
 
   // Increase timeout for API calls
-  jest.setTimeout(30000);
+  jest.setTimeout(60000);
+
+  describe('Contact Management', () => {
+    let createdListId: string;
+
+    afterAll(async () => {
+      if (createdListId) {
+        await service.deleteList(createdListId);
+      }
+    });
+
+    it('should create a list and add a contact', async () => {
+      // Create a unique list name using timestamp
+      const listName = `Test List ${new Date().getTime()}`;
+      
+      // Create the list
+      const list = await service.createList(listName);
+      createdListId = list.id;
+      expect(list).toBeDefined();
+      expect(list.name).toBe(listName);
+      expect(list.id).toBeDefined();
+      
+      // Add a contact to the list
+      const contact = {
+        email: `test${new Date().getTime()}@example.com`,
+        first_name: 'Test',
+        last_name: 'User'
+      };
+      
+      // Add contact and wait a moment for it to process
+      const addContactResponse = await service.addContact(contact);
+      expect(addContactResponse).toBeDefined();
+      
+      // Wait longer for the contact to be processed
+      await new Promise(resolve => setTimeout(resolve, 15000));
+      
+      // Add contact to list
+      const addToListResponse = await service.addContactsToList(list.id, [contact.email]);
+      expect(addToListResponse).toBeDefined();
+      
+      // Retry a few times to verify the contact was added
+      let foundContact;
+      for (let i = 0; i < 3; i++) {
+        // Wait between retries
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Check for the contact
+        const contacts = await service.getContactsByList(list.id);
+        expect(contacts).toBeDefined();
+        expect(contacts.length).toBeGreaterThan(0);
+        
+        // Try to find our contact
+        foundContact = contacts.find(c => c.email === contact.email);
+        if (foundContact) break;
+      }
+      
+      expect(foundContact).toBeDefined();
+      expect(foundContact?.email).toBe(contact.email);
+    });
+  });
 
   describe('listTemplates', () => {
     it('should return an array of templates', async () => {

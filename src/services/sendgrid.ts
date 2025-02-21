@@ -36,6 +36,33 @@ export class SendGridService {
     return response;
   }
 
+  async getContactsByList(listId: string): Promise<SendGridContact[]> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: '/v3/marketing/contacts',
+      qs: {
+        list_ids: listId,
+        page_size: 100
+      }
+    });
+    return (response.body as { result: SendGridContact[] }).result || [];
+  }
+
+  async getList(listId: string): Promise<SendGridList> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: `/v3/marketing/lists/${listId}`
+    });
+    return response.body as SendGridList;
+  }
+
+  async deleteList(listId: string): Promise<void> {
+    await this.client.request({
+      method: 'DELETE',
+      url: `/v3/marketing/lists/${listId}`
+    });
+  }
+
   async createList(name: string): Promise<SendGridList> {
     const [response] = await this.client.request({
       method: 'POST',
@@ -47,9 +74,10 @@ export class SendGridService {
 
   async addContactsToList(listId: string, contactEmails: string[]) {
     const [response] = await this.client.request({
-      method: 'POST',
-      url: `/v3/marketing/lists/${listId}/contacts`,
+      method: 'PUT',
+      url: '/v3/marketing/contacts',
       body: {
+        list_ids: [listId],
         contacts: contactEmails.map(email => ({ email }))
       }
     });
