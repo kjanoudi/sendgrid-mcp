@@ -105,17 +105,6 @@ export class SendGridService {
       method: 'PUT',
       url: '/v3/marketing/contacts',
       body: {
-      url: '/v3/marketing/lists',
-      body: { name }
-    });
-    return response.body as SendGridList;
-  }
-
-  async addContactsToList(listId: string, contactEmails: string[]) {
-    const [response] = await this.client.request({
-      method: 'PUT',
-      url: '/v3/marketing/contacts',
-      body: {
         list_ids: [listId],
         contacts: contactEmails.map(email => ({ email }))
       }
