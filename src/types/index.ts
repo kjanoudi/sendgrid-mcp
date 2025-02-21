@@ -63,3 +63,22 @@ export interface SendGridStats extends Array<{
     };
   }>;
 }> {}
+
+export interface SendGridSingleSend {
+  id: string;
+  name: string;
+  status: 'draft' | 'scheduled' | 'triggered' | 'canceled';
+  categories?: string[];
+  send_at?: string;
+  send_to: {
+    list_ids: string[];
+  };
+  email_config: {
+    subject: string;
+    html_content: string;
+    plain_content: string;
+    sender_id: number;
+    suppression_group_id?: number;
+    custom_unsubscribe_url?: string;
+  };
+}

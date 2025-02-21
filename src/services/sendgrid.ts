@@ -1,6 +1,6 @@
 import { Client } from '@sendgrid/client';
 import sgMail from '@sendgrid/mail';
-import { SendGridContact, SendGridList, SendGridTemplate, SendGridCampaign, SendGridStats } from '../types/index.js';
+import { SendGridContact, SendGridList, SendGridTemplate, SendGridCampaign, SendGridStats, SendGridSingleSend } from '../types/index.js';
 
 export class SendGridService {
   private client: Client;
@@ -283,6 +283,22 @@ export class SendGridService {
       }
     });
     return response.body;
+  }
+
+  async getSingleSend(singleSendId: string): Promise<SendGridSingleSend> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: `/v3/marketing/singlesends/${singleSendId}`
+    });
+    return response.body as SendGridSingleSend;
+  }
+
+  async listSingleSends(): Promise<SendGridSingleSend[]> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: '/v3/marketing/singlesends'
+    });
+    return (response.body as { result: SendGridSingleSend[] }).result || [];
   }
 
   // Suppression Groups

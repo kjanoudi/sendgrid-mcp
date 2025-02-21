@@ -1,5 +1,5 @@
 import { SendGridService } from '../services/sendgrid.js';
-import { SendGridContact, SendGridTemplate, SendGridCampaign } from '../types/index.js';
+import { SendGridContact, SendGridTemplate, SendGridCampaign, SendGridSingleSend } from '../types/index.js';
 
 export const getToolDefinitions = (service: SendGridService) => [
   {
@@ -385,6 +385,29 @@ export const getToolDefinitions = (service: SendGridService) => [
       },
       required: ['name', 'list_ids', 'subject', 'html_content', 'plain_content', 'sender_id']
     }
+  },
+  {
+    name: 'get_single_send',
+    description: 'Get details of a specific single send',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        single_send_id: {
+          type: 'string',
+          description: 'ID of the single send to retrieve'
+        }
+      },
+      required: ['single_send_id']
+    }
+  },
+  {
+    name: 'list_single_sends',
+    description: 'List all single sends in your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
   }
 ];
 
@@ -519,7 +542,7 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
         throw new Error('Either suppression_group_id or custom_unsubscribe_url must be provided');
       }
 
-      const singleSend = await service.createSingleSend({
+      const newSingleSend = await service.createSingleSend({
         name: args.name,
         send_to: {
           list_ids: args.list_ids
@@ -535,12 +558,41 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
       });
       
       // Schedule it to send immediately
-      await service.scheduleSingleSend(singleSend.id, 'now');
+      await service.scheduleSingleSend(newSingleSend.id, 'now');
       
       return {
         content: [{
           type: 'text',
           text: `Email "${args.name}" has been sent to the specified lists`
+        }]
+      };
+
+    case 'get_single_send':
+      const retrievedSingleSend = await service.getSingleSend(args.single_send_id);
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            id: retrievedSingleSend.id,
+            name: retrievedSingleSend.name,
+            status: retrievedSingleSend.status,
+            send_at: retrievedSingleSend.send_at,
+            list_ids: retrievedSingleSend.send_to.list_ids
+          }, null, 2)
+        }]
+      };
+
+    case 'list_single_sends':
+      const allSingleSends = await service.listSingleSends();
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(allSingleSends.map((s: SendGridSingleSend) => ({
+            id: s.id,
+            name: s.name,
+            status: s.status,
+            send_at: s.send_at
+          })), null, 2)
         }]
       };
 
