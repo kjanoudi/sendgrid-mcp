@@ -237,4 +237,13 @@ export class SendGridService {
     });
     return response.body as SendGridStats;
   }
+
+  // Verified Senders
+  async getVerifiedSenders() {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: '/v3/verified_senders'
+    });
+    return response.body;
+  }
 }

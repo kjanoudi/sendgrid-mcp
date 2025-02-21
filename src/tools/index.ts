@@ -322,6 +322,15 @@ export const getToolDefinitions = (service: SendGridService) => [
       },
       required: ['list_id']
     }
+  },
+  {
+    name: 'list_verified_senders',
+    description: 'List all verified sender identities in your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
   }
 ];
 
@@ -430,6 +439,15 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
             first_name: c.first_name,
             last_name: c.last_name
           })), null, 2)
+        }]
+      };
+
+    case 'list_verified_senders':
+      const senders = await service.getVerifiedSenders();
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(senders, null, 2)
         }]
       };
 
