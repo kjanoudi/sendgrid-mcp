@@ -331,6 +331,60 @@ export const getToolDefinitions = (service: SendGridService) => [
       properties: {},
       required: []
     }
+  },
+  {
+    name: 'list_suppression_groups',
+    description: 'List all unsubscribe groups in your SendGrid account',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  },
+  {
+    name: 'send_to_list',
+    description: 'Send an email to a contact list using SendGrid Single Sends',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Name of the single send'
+        },
+        list_ids: {
+          type: 'array',
+          items: {
+            type: 'string'
+          },
+          description: 'Array of list IDs to send to'
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line'
+        },
+        html_content: {
+          type: 'string',
+          description: 'HTML content of the email'
+        },
+        plain_content: {
+          type: 'string',
+          description: 'Plain text content of the email'
+        },
+        sender_id: {
+          type: 'number',
+          description: 'ID of the verified sender'
+        },
+        suppression_group_id: {
+          type: 'number',
+          description: 'ID of the suppression group for unsubscribes (required if custom_unsubscribe_url not provided)'
+        },
+        custom_unsubscribe_url: {
+          type: 'string',
+          description: 'Custom URL for unsubscribes (required if suppression_group_id not provided)'
+        }
+      },
+      required: ['name', 'list_ids', 'subject', 'html_content', 'plain_content', 'sender_id']
+    }
   }
 ];
 
@@ -448,6 +502,45 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
         content: [{
           type: 'text',
           text: JSON.stringify(senders, null, 2)
+        }]
+      };
+
+    case 'list_suppression_groups':
+      const groups = await service.getSuppressionGroups();
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(groups, null, 2)
+        }]
+      };
+
+    case 'send_to_list':
+      if (!args.suppression_group_id && !args.custom_unsubscribe_url) {
+        throw new Error('Either suppression_group_id or custom_unsubscribe_url must be provided');
+      }
+
+      const singleSend = await service.createSingleSend({
+        name: args.name,
+        send_to: {
+          list_ids: args.list_ids
+        },
+        email_config: {
+          subject: args.subject,
+          html_content: args.html_content,
+          plain_content: args.plain_content,
+          sender_id: args.sender_id,
+          suppression_group_id: args.suppression_group_id,
+          custom_unsubscribe_url: args.custom_unsubscribe_url
+        }
+      });
+      
+      // Schedule it to send immediately
+      await service.scheduleSingleSend(singleSend.id, 'now');
+      
+      return {
+        content: [{
+          type: 'text',
+          text: `Email "${args.name}" has been sent to the specified lists`
         }]
       };
 

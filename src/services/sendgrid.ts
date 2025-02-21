@@ -238,6 +238,47 @@ export class SendGridService {
     return response.body as SendGridStats;
   }
 
+  // Single Sends (New Marketing Campaigns API)
+  async createSingleSend(params: {
+    name: string;
+    send_to: { list_ids: string[] };
+    email_config: {
+      subject: string;
+      html_content: string;
+      plain_content: string;
+      sender_id: number;
+      suppression_group_id?: number;
+      custom_unsubscribe_url?: string;
+    };
+  }): Promise<{ id: string }> {
+    const [response] = await this.client.request({
+      method: 'POST',
+      url: '/v3/marketing/singlesends',
+      body: params
+    });
+    return response.body as { id: string };
+  }
+
+  async scheduleSingleSend(singleSendId: string, sendAt: 'now' | string) {
+    const [response] = await this.client.request({
+      method: 'PUT',
+      url: `/v3/marketing/singlesends/${singleSendId}/schedule`,
+      body: {
+        send_at: sendAt
+      }
+    });
+    return response.body;
+  }
+
+  // Suppression Groups
+  async getSuppressionGroups() {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: '/v3/asm/groups'
+    });
+    return response.body;
+  }
+
   // Verified Senders
   async getVerifiedSenders() {
     const [response] = await this.client.request({
