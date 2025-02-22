@@ -268,6 +268,7 @@ npm run build
 - Sender email addresses must be verified with SendGrid before they can be used to send emails
 - All templates are created as dynamic templates with support for handlebars syntax (e.g., {{variable_name}})
 - The Single Sends API is used for all bulk email operations as it provides better tracking and management capabilities
+- The SendGrid API is "eventually consistent" - data changes (like adding contacts or updating lists) may not appear immediately after being made
 
 ## License
 
