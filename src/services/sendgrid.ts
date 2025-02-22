@@ -204,7 +204,10 @@ export class SendGridService {
   async listTemplates(): Promise<SendGridTemplate[]> {
     const [response] = await this.client.request({
       method: 'GET',
-      url: '/v3/templates'
+      url: '/v3/templates',
+      qs: {
+        generations: 'dynamic'
+      }
     });
     return ((response.body as { templates: SendGridTemplate[] }).templates || []);
   }
