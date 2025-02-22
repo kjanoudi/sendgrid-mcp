@@ -220,6 +220,13 @@ export class SendGridService {
     return response.body as SendGridTemplate;
   }
 
+  async deleteTemplate(templateId: string): Promise<void> {
+    await this.client.request({
+      method: 'DELETE',
+      url: `/v3/templates/${templateId}`
+    });
+  }
+
   // Email Validation
   async validateEmail(email: string) {
     const [response] = await this.client.request({

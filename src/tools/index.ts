@@ -168,6 +168,20 @@ export const getToolDefinitions = (service: SendGridService) => [
     }
   },
   {
+    name: 'delete_template',
+    description: 'Delete a dynamic template from SendGrid',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template to delete'
+        }
+      },
+      required: ['template_id']
+    }
+  },
+  {
     name: 'validate_email',
     description: 'Validate an email address using SendGrid',
     inputSchema: {
@@ -401,6 +415,10 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
     case 'get_template':
       const retrievedTemplate = await service.getTemplate(args.template_id);
       return { content: [{ type: 'text', text: JSON.stringify(retrievedTemplate, null, 2) }] };
+
+    case 'delete_template':
+      await service.deleteTemplate(args.template_id);
+      return { content: [{ type: 'text', text: `Template ${args.template_id} deleted successfully` }] };
 
     case 'validate_email':
       const validation = await service.validateEmail(args.email);

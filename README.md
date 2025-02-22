@@ -147,6 +147,14 @@ Retrieve a template by ID.
 }
 ```
 
+#### delete_template
+Delete a dynamic template.
+```typescript
+{
+  template_id: string;  // Required: ID of the template to delete
+}
+```
+
 ### Analytics and Validation
 
 #### get_stats
