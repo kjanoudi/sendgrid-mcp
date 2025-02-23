@@ -1,6 +1,22 @@
 # SendGrid MCP Server
 
+<img src="assets/sendgrid-logo.png" width="256" height="256" alt="SendGrid Logo" />
+
 A Model Context Protocol (MCP) server that provides access to SendGrid's Marketing API for email marketing and contact management. https://docs.sendgrid.com/api-reference/how-to-use-the-sendgrid-v3-api
+
+## Demo
+
+Here's a walkthrough of the SendGrid MCP server's capabilities:
+
+<img src="assets/1.png" width="760" alt="SendGrid MCP Demo 1" />
+<img src="assets/2.png" width="760" alt="SendGrid MCP Demo 2" />
+<img src="assets/3.png" width="760" alt="SendGrid MCP Demo 3" />
+<img src="assets/4.png" width="760" alt="SendGrid MCP Demo 4" />
+<img src="assets/5.png" width="760" alt="SendGrid MCP Demo 5" />
+<img src="assets/6.png" width="760" alt="SendGrid MCP Demo 6" />
+<img src="assets/7.png" width="760" alt="SendGrid MCP Demo 7" />
+<img src="assets/8.png" width="760" alt="SendGrid MCP Demo 8" />
+<img src="assets/9.png" width="760" alt="SendGrid MCP Demo 9" />
 
 ## Important Note on API Support
 
@@ -273,3 +289,5 @@ npm run build
 ## License
 
 MIT
+
+SendGrid logo copyright / owned by Twilio
