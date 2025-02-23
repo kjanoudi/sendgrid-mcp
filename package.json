@@ -1,11 +1,11 @@
 {
-  "name": "sendgrid-mcp-server",
-  "version": "0.1.0",
+  "name": "sendgrid-mcp",
+  "version": "1.0.0",
   "description": "Send emails and interact with SendGrid",
   "private": true,
   "type": "module",
   "bin": {
-    "sendgrid-mcp-server": "./build/index.js"
+    "sendgrid-mcp": "./build/index.js"
   },
   "files": [
     "build"
