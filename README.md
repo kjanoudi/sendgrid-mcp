@@ -6,7 +6,7 @@ A Model Context Protocol (MCP) server that provides access to SendGrid's Marketi
 
 ## Demo
 
-Here's a walkthrough of the SendGrid MCP server's capabilities:
+In this demo, we ask the Cline SendGrid agent to make a new contact list, add my emails to it, automatically generate a template for Lost Cities facts, and send the email to the list. In this process, Cline will automatically realize that it needs to know the verified senders we have, and which unsubscribe group to use. A pretty email is delivered to my inboxes, delighting me with Lost Cities!
 
 <img src="assets/1.png" width="760" alt="SendGrid MCP Demo 1" />
 <img src="assets/2.png" width="760" alt="SendGrid MCP Demo 2" />
