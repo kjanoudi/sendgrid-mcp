@@ -208,7 +208,8 @@ List all unsubscribe groups.
 ## Installation
 
 ```bash
-git clone https://github.com/Garoth/sendgrid-mcp-server.git
+git clone https://github.com/Garoth/sendgrid-mcp.git
+cd sendgrid-mcp
 npm install
 ```
 
@@ -227,7 +228,7 @@ npm install
   "mcpServers": {
     "sendgrid": {
       "command": "node",
-      "args": ["/path/to/sendgrid-mcp-server/build/index.js"],
+      "args": ["/path/to/sendgrid-mcp/build/index.js"],
       "env": {
         "SENDGRID_API_KEY": "your-api-key-here"
       },
