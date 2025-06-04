@@ -137,20 +137,13 @@ export const getToolDefinitions = (service: SendGridService) => [
           type: 'string',
           description: 'Name of the template'
         },
-        subject: {
+        generation: {
           type: 'string',
-          description: 'Default subject line for the template'
-        },
-        html_content: {
-          type: 'string',
-          description: 'HTML content of the template'
-        },
-        plain_content: {
-          type: 'string',
-          description: 'Plain text content of the template'
+          enum: ['legacy', 'dynamic'],
+          description: 'Template generation type (defaults to dynamic)'
         }
       },
-      required: ['name', 'subject', 'html_content', 'plain_content']
+      required: ['name']
     }
   },
   {
@@ -223,8 +216,212 @@ export const getToolDefinitions = (service: SendGridService) => [
     description: 'List all email templates in your SendGrid account',
     inputSchema: {
       type: 'object',
-      properties: {},
+      properties: {
+        generations: {
+          type: 'string',
+          enum: ['legacy', 'dynamic', 'legacy,dynamic'],
+          description: 'Which generations of templates to return (defaults to legacy)'
+        },
+        page_size: {
+          type: 'number',
+          description: 'Number of templates per page (1-200)'
+        },
+        page_token: {
+          type: 'string',
+          description: 'Token for a specific page of results'
+        }
+      },
       required: []
+    }
+  },
+  {
+    name: 'update_template',
+    description: 'Update the name of an existing template',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template to update'
+        },
+        name: {
+          type: 'string',
+          description: 'New name for the template'
+        }
+      },
+      required: ['template_id', 'name']
+    }
+  },
+  {
+    name: 'duplicate_template',
+    description: 'Create a copy of an existing template',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template to duplicate'
+        },
+        name: {
+          type: 'string',
+          description: 'Name for the new template copy'
+        }
+      },
+      required: ['template_id']
+    }
+  },
+  {
+    name: 'create_template_version',
+    description: 'Create a new version for a template',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template'
+        },
+        name: {
+          type: 'string',
+          description: 'Name of the version'
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line'
+        },
+        html_content: {
+          type: 'string',
+          description: 'HTML content (max 1MB)'
+        },
+        plain_content: {
+          type: 'string',
+          description: 'Plain text content (optional, generated from HTML if omitted)'
+        },
+        generate_plain_content: {
+          type: 'boolean',
+          description: 'Auto-generate plain content from HTML (default: true)'
+        },
+        active: {
+          type: 'number',
+          enum: [0, 1],
+          description: 'Set as active version (1) or inactive (0)'
+        },
+        editor: {
+          type: 'string',
+          enum: ['code', 'design'],
+          description: 'Editor type used'
+        },
+        test_data: {
+          type: 'string',
+          description: 'Mock JSON data for dynamic templates'
+        }
+      },
+      required: ['template_id', 'name', 'subject', 'html_content']
+    }
+  },
+  {
+    name: 'get_template_version',
+    description: 'Get a specific version of a template',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template'
+        },
+        version_id: {
+          type: 'string',
+          description: 'ID of the version'
+        }
+      },
+      required: ['template_id', 'version_id']
+    }
+  },
+  {
+    name: 'update_template_version',
+    description: 'Update an existing template version',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template'
+        },
+        version_id: {
+          type: 'string',
+          description: 'ID of the version to update'
+        },
+        name: {
+          type: 'string',
+          description: 'Name of the version'
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line'
+        },
+        html_content: {
+          type: 'string',
+          description: 'HTML content (max 1MB)'
+        },
+        plain_content: {
+          type: 'string',
+          description: 'Plain text content'
+        },
+        generate_plain_content: {
+          type: 'boolean',
+          description: 'Auto-generate plain content from HTML'
+        },
+        active: {
+          type: 'number',
+          enum: [0, 1],
+          description: 'Set as active version (1) or inactive (0)'
+        },
+        editor: {
+          type: 'string',
+          enum: ['code', 'design'],
+          description: 'Editor type used'
+        },
+        test_data: {
+          type: 'string',
+          description: 'Mock JSON data for dynamic templates'
+        }
+      },
+      required: ['template_id', 'version_id', 'name', 'subject', 'html_content']
+    }
+  },
+  {
+    name: 'delete_template_version',
+    description: 'Delete a specific template version',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template'
+        },
+        version_id: {
+          type: 'string',
+          description: 'ID of the version to delete'
+        }
+      },
+      required: ['template_id', 'version_id']
+    }
+  },
+  {
+    name: 'activate_template_version',
+    description: 'Activate a specific template version',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template_id: {
+          type: 'string',
+          description: 'ID of the template'
+        },
+        version_id: {
+          type: 'string',
+          description: 'ID of the version to activate'
+        }
+      },
+      required: ['template_id', 'version_id']
     }
   },
   {
@@ -429,17 +626,20 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
       return { content: [{ type: 'text', text: JSON.stringify(stats, null, 2) }] };
 
     case 'list_templates':
-      const templates = await service.listTemplates();
+      const templateResponse = await service.listTemplates(args);
       return {
         content: [{
           type: 'text',
-          text: JSON.stringify(templates.map(t => ({
-            id: t.id,
-            name: t.name,
-            generation: t.generation,
-            updated_at: t.updated_at,
-            versions: t.versions.length
-          })), null, 2)
+          text: JSON.stringify({
+            templates: templateResponse.result.map(t => ({
+              id: t.id,
+              name: t.name,
+              generation: t.generation,
+              updated_at: t.updated_at,
+              versions: t.versions.length
+            })),
+            metadata: templateResponse._metadata
+          }, null, 2)
         }]
       };
 
@@ -553,6 +753,36 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
     case 'remove_contacts_from_list':
       await service.removeContactsFromList(args.list_id, args.emails);
       return { content: [{ type: 'text', text: `Removed ${args.emails.length} contacts from list ${args.list_id}` }] };
+
+    case 'update_template':
+      const updatedTemplate = await service.updateTemplate(args.template_id, { name: args.name });
+      return { content: [{ type: 'text', text: `Template ${args.template_id} renamed to "${args.name}"` }] };
+
+    case 'duplicate_template':
+      const duplicatedTemplate = await service.duplicateTemplate(args.template_id, args.name ? { name: args.name } : {});
+      return { content: [{ type: 'text', text: `Template duplicated with new ID: ${duplicatedTemplate.id}` }] };
+
+    case 'create_template_version':
+      const { template_id, ...versionParams } = args;
+      const newVersion = await service.createTemplateVersion(template_id, versionParams);
+      return { content: [{ type: 'text', text: `Template version created with ID: ${newVersion.id}` }] };
+
+    case 'get_template_version':
+      const version = await service.getTemplateVersion(args.template_id, args.version_id);
+      return { content: [{ type: 'text', text: JSON.stringify(version, null, 2) }] };
+
+    case 'update_template_version':
+      const { template_id: tid, version_id, ...updateParams } = args;
+      const updatedVersion = await service.updateTemplateVersion(tid, version_id, updateParams);
+      return { content: [{ type: 'text', text: `Template version ${version_id} updated successfully` }] };
+
+    case 'delete_template_version':
+      await service.deleteTemplateVersion(args.template_id, args.version_id);
+      return { content: [{ type: 'text', text: `Template version ${args.version_id} deleted successfully` }] };
+
+    case 'activate_template_version':
+      const activatedVersion = await service.activateTemplateVersion(args.template_id, args.version_id);
+      return { content: [{ type: 'text', text: `Template version ${args.version_id} activated successfully` }] };
 
     default:
       throw new Error(`Unknown tool: ${name}`);

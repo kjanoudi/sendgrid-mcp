@@ -17,9 +17,12 @@ export interface SendGridList {
 export interface SendGridTemplate {
   id: string;
   name: string;
-  generation: string;
+  generation: 'legacy' | 'dynamic';
   updated_at: string;
   versions: SendGridTemplateVersion[];
+  warning?: {
+    message: string;
+  };
 }
 
 export interface SendGridTemplateVersion {
@@ -30,6 +33,11 @@ export interface SendGridTemplateVersion {
   html_content: string;
   plain_content: string;
   subject: string;
+  generate_plain_content?: boolean;
+  editor?: 'code' | 'design';
+  test_data?: string;
+  updated_at?: string;
+  thumbnail_url?: string;
 }
 
 export interface SendGridStats extends Array<{
@@ -73,4 +81,30 @@ export interface SendGridSingleSend {
     suppression_group_id?: number;
     custom_unsubscribe_url?: string;
   };
+}
+
+export interface SendGridListTemplatesResponse {
+  result: SendGridTemplate[];
+  _metadata?: {
+    self?: string;
+    next?: string;
+    prev?: string;
+    count?: number;
+  };
+}
+
+export interface SendGridTemplateCreateParams {
+  name: string;
+  generation?: 'legacy' | 'dynamic';
+}
+
+export interface SendGridTemplateVersionCreateParams {
+  active?: 0 | 1;
+  name: string;
+  html_content: string;
+  plain_content?: string;
+  generate_plain_content?: boolean;
+  subject: string;
+  editor?: 'code' | 'design';
+  test_data?: string;
 }

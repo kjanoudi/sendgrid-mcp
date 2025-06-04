@@ -1,6 +1,6 @@
 import { Client } from '@sendgrid/client';
 import sgMail from '@sendgrid/mail';
-import { SendGridContact, SendGridList, SendGridTemplate, SendGridStats, SendGridSingleSend } from '../types/index.js';
+import { SendGridContact, SendGridList, SendGridTemplate, SendGridStats, SendGridSingleSend, SendGridListTemplatesResponse, SendGridTemplateVersionCreateParams, SendGridTemplateVersion } from '../types/index.js';
 
 export class SendGridService {
   private client: Client;
@@ -155,61 +155,57 @@ export class SendGridService {
   // Template Management
   async createTemplate(params: {
     name: string;
-    html_content: string;
-    plain_content: string;
-    subject: string;
+    generation?: 'legacy' | 'dynamic';
   }): Promise<SendGridTemplate> {
     const [response] = await this.client.request({
       method: 'POST',
       url: '/v3/templates',
       body: {
         name: params.name,
-        generation: 'dynamic'
+        generation: params.generation || 'dynamic'
       }
     });
 
-    const templateId = (response.body as { id: string }).id;
-    
-    // Create the first version of the template
-    const [versionResponse] = await this.client.request({
-      method: 'POST',
-      url: `/v3/templates/${templateId}/versions`,
-      body: {
-        template_id: templateId,
-        name: `${params.name} v1`,
-        subject: params.subject,
-        html_content: params.html_content,
-        plain_content: params.plain_content,
-        active: 1
-      }
-    });
-
-    return {
-      id: templateId,
-      name: params.name,
-      generation: 'dynamic',
-      updated_at: new Date().toISOString(),
-      versions: [{
-        id: (versionResponse.body as { id: string }).id,
-        template_id: templateId,
-        active: 1,
-        name: `${params.name} v1`,
-        html_content: params.html_content,
-        plain_content: params.plain_content,
-        subject: params.subject
-      }]
-    };
+    return response.body as SendGridTemplate;
   }
 
-  async listTemplates(): Promise<SendGridTemplate[]> {
+  async updateTemplate(templateId: string, params: {
+    name: string;
+  }): Promise<SendGridTemplate> {
+    const [response] = await this.client.request({
+      method: 'PATCH',
+      url: `/v3/templates/${templateId}`,
+      body: params
+    });
+    return response.body as SendGridTemplate;
+  }
+
+  async duplicateTemplate(templateId: string, params: {
+    name?: string;
+  }): Promise<SendGridTemplate> {
+    const [response] = await this.client.request({
+      method: 'POST',
+      url: `/v3/templates/${templateId}`,
+      body: params
+    });
+    return response.body as SendGridTemplate;
+  }
+
+  async listTemplates(params?: {
+    generations?: 'legacy' | 'dynamic' | 'legacy,dynamic';
+    page_size?: number;
+    page_token?: string;
+  }): Promise<SendGridListTemplatesResponse> {
     const [response] = await this.client.request({
       method: 'GET',
       url: '/v3/templates',
       qs: {
-        generations: 'dynamic'
+        generations: params?.generations || 'legacy',
+        page_size: params?.page_size,
+        page_token: params?.page_token
       }
     });
-    return ((response.body as { templates: SendGridTemplate[] }).templates || []);
+    return response.body as SendGridListTemplatesResponse;
   }
 
   async getTemplate(templateId: string): Promise<SendGridTemplate> {
@@ -225,6 +221,48 @@ export class SendGridService {
       method: 'DELETE',
       url: `/v3/templates/${templateId}`
     });
+  }
+
+  // Template Version Management
+  async createTemplateVersion(templateId: string, params: SendGridTemplateVersionCreateParams): Promise<SendGridTemplateVersion> {
+    const [response] = await this.client.request({
+      method: 'POST',
+      url: `/v3/templates/${templateId}/versions`,
+      body: params
+    });
+    return response.body as SendGridTemplateVersion;
+  }
+
+  async getTemplateVersion(templateId: string, versionId: string): Promise<SendGridTemplateVersion> {
+    const [response] = await this.client.request({
+      method: 'GET',
+      url: `/v3/templates/${templateId}/versions/${versionId}`
+    });
+    return response.body as SendGridTemplateVersion;
+  }
+
+  async updateTemplateVersion(templateId: string, versionId: string, params: SendGridTemplateVersionCreateParams): Promise<SendGridTemplateVersion> {
+    const [response] = await this.client.request({
+      method: 'PATCH',
+      url: `/v3/templates/${templateId}/versions/${versionId}`,
+      body: params
+    });
+    return response.body as SendGridTemplateVersion;
+  }
+
+  async deleteTemplateVersion(templateId: string, versionId: string): Promise<void> {
+    await this.client.request({
+      method: 'DELETE',
+      url: `/v3/templates/${templateId}/versions/${versionId}`
+    });
+  }
+
+  async activateTemplateVersion(templateId: string, versionId: string): Promise<SendGridTemplateVersion> {
+    const [response] = await this.client.request({
+      method: 'POST',
+      url: `/v3/templates/${templateId}/versions/${versionId}/activate`
+    });
+    return response.body as SendGridTemplateVersion;
   }
 
   // Email Validation
