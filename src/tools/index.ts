@@ -141,6 +141,19 @@ export const getToolDefinitions = (service: SendGridService) => [
           type: 'string',
           enum: ['legacy', 'dynamic'],
           description: 'Template generation type (defaults to dynamic)'
+        },
+        // Legacy parameters for backward compatibility
+        subject: {
+          type: 'string',
+          description: '[DEPRECATED] Use create_template_version instead. Subject line for the template'
+        },
+        html_content: {
+          type: 'string',
+          description: '[DEPRECATED] Use create_template_version instead. HTML content of the template'
+        },
+        plain_content: {
+          type: 'string',
+          description: '[DEPRECATED] Use create_template_version instead. Plain text content of the template'
         }
       },
       required: ['name']
@@ -606,8 +619,37 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
       return { content: [{ type: 'text', text: `Added ${args.emails.length} contacts to list ${args.list_id}` }] };
 
     case 'create_template':
-      const template = await service.createTemplate(args);
-      return { content: [{ type: 'text', text: `Template "${args.name}" created with ID: ${template.id}` }] };
+      // Check if using legacy parameters
+      if (args.subject && args.html_content && args.plain_content) {
+        // Legacy behavior: create template and first version
+        const template = await service.createTemplate({
+          name: args.name,
+          generation: args.generation || 'dynamic'
+        });
+        
+        try {
+          // Create the first version with the provided content
+          await service.createTemplateVersion(template.id, {
+            name: `${args.name} v1`,
+            subject: args.subject,
+            html_content: args.html_content,
+            plain_content: args.plain_content,
+            active: 1
+          });
+          
+          return { content: [{ type: 'text', text: `Template "${args.name}" created with ID: ${template.id} (legacy mode - created with initial version)` }] };
+        } catch (error) {
+          // If version creation fails, still return the template ID
+          return { content: [{ type: 'text', text: `Template "${args.name}" created with ID: ${template.id} (warning: initial version creation failed)` }] };
+        }
+      } else {
+        // New behavior: just create the template
+        const template = await service.createTemplate({
+          name: args.name,
+          generation: args.generation
+        });
+        return { content: [{ type: 'text', text: `Template "${args.name}" created with ID: ${template.id}` }] };
+      }
 
     case 'get_template':
       const retrievedTemplate = await service.getTemplate(args.template_id);
