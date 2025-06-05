@@ -19,7 +19,7 @@ export interface SendGridTemplate {
   name: string;
   generation: 'legacy' | 'dynamic';
   updated_at: string;
-  versions: SendGridTemplateVersion[];
+  versions?: SendGridTemplateVersion[];
   warning?: {
     message: string;
   };

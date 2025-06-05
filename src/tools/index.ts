@@ -678,7 +678,7 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
               name: t.name,
               generation: t.generation,
               updated_at: t.updated_at,
-              versions: t.versions.length
+              versions: t.versions ? t.versions.length : 0
             })),
             metadata: templateResponse._metadata
           }, null, 2)
