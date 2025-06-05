@@ -669,18 +669,22 @@ export const handleToolCall = async (service: SendGridService, name: string, arg
 
     case 'list_templates':
       const templateResponse = await service.listTemplates(args);
+      
+      // Handle case where result might be undefined or response structure is different
+      const templates = templateResponse?.result || [];
+      
       return {
         content: [{
           type: 'text',
           text: JSON.stringify({
-            templates: templateResponse.result.map(t => ({
+            templates: Array.isArray(templates) ? templates.map(t => ({
               id: t.id,
               name: t.name,
               generation: t.generation,
               updated_at: t.updated_at,
               versions: t.versions ? t.versions.length : 0
-            })),
-            metadata: templateResponse._metadata
+            })) : [],
+            metadata: templateResponse?._metadata
           }, null, 2)
         }]
       };

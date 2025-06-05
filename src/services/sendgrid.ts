@@ -205,6 +205,16 @@ export class SendGridService {
         page_token: params?.page_token
       }
     });
+    
+    // The SendGrid API returns templates directly as an array when using the v3/templates endpoint
+    // We need to wrap it in the expected structure
+    if (Array.isArray(response.body)) {
+      return {
+        result: response.body,
+        _metadata: response.headers['x-metadata'] ? JSON.parse(response.headers['x-metadata']) : undefined
+      };
+    }
+    
     return response.body as SendGridListTemplatesResponse;
   }
 
